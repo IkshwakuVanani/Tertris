@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Tetris</title>
-  <!-- Google Font for modern look -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="main-container">
@@ -17,9 +16,10 @@
         <div id="gameOverText" class="game-text hidden">Game Over</div>
       </div>
     </div>
+
     <div class="side-panel">
       <div class="score-board">
-        <div>Score: <span id="score">0</span></div>
+        Score: <span id="score">0</span>
       </div>
       <div class="controls">
         <button id="startBtn">Start</button>
@@ -29,19 +29,23 @@
     </div>
   </div>
 
-  <!-- Audio: replace src with your royalty-free tracks -->
-  <audio id="bgm" loop>
-    <source src="audio/bgm.mp3" type="audio/mpeg">
-  </audio>
-  <audio id="moveSound">
-    <source src="audio/move.mp3" type="audio/mpeg">
-  </audio>
-  <audio id="dropSound">
-    <source src="audio/drop.mp3" type="audio/mpeg">
-  </audio>
-  <audio id="clearSound">
-    <source src="audio/clear.mp3" type="audio/mpeg">
-  </audio>
+  <!-- Mobile Controls -->
+  <div class="mobile-controls">
+    <div class="mobile-left">
+      <button id="leftBtn">◀</button>
+      <button id="rightBtn">▶</button>
+    </div>
+    <div class="mobile-right">
+      <button id="rotateBtn">⟳</button>
+      <button id="downBtn">▼</button>
+    </div>
+  </div>
+
+  <!-- Audio -->
+  <audio id="bgm" loop><source src="audio/bgm.mp3" type="audio/mpeg"></audio>
+  <audio id="moveSound"><source src="audio/move.mp3" type="audio/mpeg"></audio>
+  <audio id="dropSound"><source src="audio/drop.mp3" type="audio/mpeg"></audio>
+  <audio id="clearSound"><source src="audio/clear.mp3" type="audio/mpeg"></audio>
 
   <script src="script.js"></script>
 </body>
