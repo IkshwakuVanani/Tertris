@@ -92,29 +92,37 @@ function initBoard() {
 
 // Draw the current game state
 function draw() {
-  // Clear canvas to black background
+  // Clear canvas
   context.fillStyle = '#000';
   context.fillRect(0, 0, canvas.width, canvas.height);
-  // Draw fixed blocks from the board array
+
+  // Grid cell size
+  const cellSize = 30;
+
+  // Draw locked pieces from board
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       if (board[r][c]) {
         context.fillStyle = board[r][c];
-        context.fillRect(c * 30, r * 30, 30, 30);
+        context.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
       }
+
+      // Draw grid lines (even on empty cells)
+      context.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      context.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
     }
   }
-  // Draw the active piece
+
+  // Draw current piece
   if (currentPiece) {
     context.fillStyle = COLORS[currentPiece.shape];
     for (let r = 0; r < currentPiece.matrix.length; r++) {
       for (let c = 0; c < currentPiece.matrix[r].length; c++) {
         if (currentPiece.matrix[r][c]) {
-          context.fillRect(
-            (currentPiece.x + c) * 30,
-            (currentPiece.y + r) * 30,
-            30, 30
-          );
+          const x = (currentPiece.x + c) * cellSize;
+          const y = (currentPiece.y + r) * cellSize;
+          context.fillRect(x, y, cellSize, cellSize);
+          context.strokeRect(x, y, cellSize, cellSize);  // grid line on tetromino
         }
       }
     }
