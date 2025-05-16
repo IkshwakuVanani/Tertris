@@ -1,59 +1,106 @@
+/* Reset and global styles */
 body {
-  font-family: Arial, sans-serif;
-  background: #111;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100vh;
   margin: 0;
-}
-
-h1 {
-  margin: 20px;
-}
-
-.tetris-container {
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+  color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Smooth gradient background */
+  height: 100vh;
   display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Main layout container */
+.main-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
   gap: 20px;
 }
 
-#grid {
-  display: grid;
-  grid-template-columns: repeat(10, 30px);
-  grid-template-rows: repeat(20, 30px);
-  gap: 1px;
-  background: #333;
+/* Game area container with frosted glass effect */
+.game-container {
+  position: relative;
+  width: 300px;
+  height: 600px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+  border-radius: 10px;
 }
 
-#grid div {
-  width: 30px;
-  height: 30px;
-  background: #111;
-  border: 1px solid #222;
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.taken {
-  background: #777;
+/* Overlay messages */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.tetromino {
-  background: lime !important;
-  border: 1px solid white;
+.game-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
 }
 
-.info {
+.hidden {
+  display: none;
+}
+
+/* Sidebar panel (score and controls) */
+.side-panel {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  align-items: center;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+  border-radius: 10px;
+  padding: 20px;
 }
 
-#start-button {
-  margin-top: 20px;
-  padding: 10px;
-  background: limegreen;
-  color: black;
-  font-weight: bold;
-  border: none;
+.score-board {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+}
+
+/* Control buttons styling */
+.controls button {
+  margin: 5px;
+  padding: 10px 20px;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: 5px;
   cursor: pointer;
+  font-size: 1rem;
+}
+
+.controls button:hover {
+  background: rgba(255,255,255,0.4);
+}
+
+/* Responsive layout: stack on small screens */
+@media (max-width: 600px) {
+  .main-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  .side-panel {
+    margin-top: 20px;
+  }
 }
