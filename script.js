@@ -1,292 +1,313 @@
-const COLS = 10, ROWS = 20, CELL = 30;
-const canvas = document.getElementById('game');
-const context = canvas.getContext('2d');
-canvas.width = COLS * CELL;
-canvas.height = ROWS * CELL;
+// script.js: Tetris game logic
 
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d');
 const holdCanvas = document.getElementById('hold');
 const holdCtx = holdCanvas.getContext('2d');
 
-const scoreEl = document.getElementById('score');
-const pauseBtn = document.getElementById('pauseBtn');
-const restartBtn = document.getElementById('restartBtn');
-const startOverlay = document.getElementById('startOverlay');
-const pausedText = document.getElementById('pausedText');
-const gameOverText = document.getElementById('gameOverText');
+const COLS = 10, ROWS = 22;      // 10x22 grid (20 visible rows + 2 hidden)
+const VISIBLE_ROWS = 20;
+const CELL = 30;                // block size in pixels
+canvas.width = COLS * CELL;
+canvas.height = VISIBLE_ROWS * CELL;
 
-const bgm = document.getElementById('bgm');
-const moveSound = document.getElementById('moveSound');
-const dropSound = document.getElementById('dropSound');
-const clearSound = document.getElementById('clearSound');
+// Game state
+let board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+let current = null, currentX = 0, currentY = 0, currentRotation = 0;
+let holdPiece = null, holdUsed = false;
+let bag = [];
 
-const SHAPES = {
-  I: [[1,1,1,1]],
-  J: [[1,0,0],[1,1,1]],
-  L: [[0,0,1],[1,1,1]],
-  O: [[1,1],[1,1]],
-  S: [[0,1,1],[1,1,0]],
-  Z: [[1,1,0],[0,1,1]],
-  T: [[0,1,0],[1,1,1]]
+// Tetromino rotation definitions (x,y offsets)
+const PIECES = {
+  I: [
+    [[0,1],[1,1],[2,1],[3,1]],
+    [[2,0],[2,1],[2,2],[2,3]],
+    [[0,2],[1,2],[2,2],[3,2]],
+    [[1,0],[1,1],[1,2],[1,3]]
+  ],
+  J: [
+    [[0,0],[0,1],[1,1],[2,1]],
+    [[1,0],[2,0],[1,1],[1,2]],
+    [[0,1],[1,1],[2,1],[2,2]],
+    [[1,0],[1,1],[1,2],[0,2]]
+  ],
+  L: [
+    [[2,0],[0,1],[1,1],[2,1]],
+    [[1,0],[1,1],[1,2],[2,2]],
+    [[0,1],[1,1],[2,1],[0,2]],
+    [[0,0],[1,0],[1,1],[1,2]]
+  ],
+  O: [
+    [[1,0],[2,0],[1,1],[2,1]],
+    [[1,0],[2,0],[1,1],[2,1]],
+    [[1,0],[2,0],[1,1],[2,1]],
+    [[1,0],[2,0],[1,1],[2,1]]
+  ],
+  S: [
+    [[1,0],[2,0],[0,1],[1,1]],
+    [[1,0],[1,1],[2,1],[2,2]],
+    [[1,1],[2,1],[0,2],[1,2]],
+    [[0,0],[0,1],[1,1],[1,2]]
+  ],
+  T: [
+    [[1,0],[0,1],[1,1],[2,1]],
+    [[1,0],[1,1],[2,1],[1,2]],
+    [[0,1],[1,1],[2,1],[1,2]],
+    [[1,0],[0,1],[1,1],[1,2]]
+  ],
+  Z: [
+    [[0,0],[1,0],[1,1],[2,1]],
+    [[2,0],[2,1],[1,1],[1,2]],
+    [[0,1],[1,1],[1,2],[2,2]],
+    [[1,0],[1,1],[0,1],[0,2]]
+  ]
 };
+
+// Piece colors
 const COLORS = {
-  I: '#0ff', J: '#00f', L: '#f90',
-  O: '#ff0', S: '#0f0', Z: '#f00', T: '#a0f'
+  I: '#00f0f0', J: '#0000f0', L: '#f0a000', O: '#f0f000',
+  S: '#00f000', T: '#a000f0', Z: '#f00000'
 };
 
-let board = [];
-let current, hold = null;
-let canHold = true;
-let score = 0;
-let paused = false;
-let gameOver = false;
-let lastDrop = 0;
-const dropInterval = 1000;
-
-function resetBoard() {
-  board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+// Audio (placeholder .mp3 files in audio/ folder)
+const audioMove = new Audio('audio/move.mp3');
+const audioDrop = new Audio('audio/drop.mp3');
+const audioClear = new Audio('audio/clear.mp3');
+const bgm = new Audio('audio/bgm.mp3');
+bgm.loop = true;
+bgm.volume = 0.5;
+// Autoplay workaround: start music on first key press
+function startMusic() {
+  if (bgm.paused) bgm.play();
+  window.removeEventListener('keydown', startMusic);
 }
+window.addEventListener('keydown', startMusic);
 
-function spawn() {
-  const types = Object.keys(SHAPES);
-  const shape = types[Math.floor(Math.random() * types.length)];
-  const matrix = SHAPES[shape];
-  current = {
-    shape,
-    matrix,
-    x: Math.floor((COLS - matrix[0].length) / 2),
-    y: -matrix.length
-  };
-  if (collides(current.matrix, current.x, current.y)) {
-    gameOver = true;
-    bgm.pause();
-    gameOverText.classList.remove('hidden');
-  }
-  canHold = true;
-}
-
-function holdPiece() {
-  if (!canHold) return;
-  if (!hold) {
-    hold = current.shape;
-    spawn();
-  } else {
-    [hold, current.shape] = [current.shape, hold];
-    current.matrix = SHAPES[current.shape];
-    current.x = Math.floor((COLS - current.matrix[0].length) / 2);
-    current.y = -current.matrix.length;
-  }
-  canHold = false;
-  drawHold();
-}
-
-function drawHold() {
-  holdCtx.clearRect(0, 0, holdCanvas.width, holdCanvas.height);
-  if (!hold) return;
-  const shape = SHAPES[hold];
-  holdCtx.fillStyle = COLORS[hold];
-  for (let r = 0; r < shape.length; r++) {
-    for (let c = 0; c < shape[r].length; c++) {
-      if (shape[r][c]) {
-        holdCtx.fillRect(c * 25 + 20, r * 25 + 20, 24, 24);
-        holdCtx.strokeStyle = 'rgba(0,0,0,0.5)';
-        holdCtx.strokeRect(c * 25 + 20, r * 25 + 20, 24, 24);
-      }
-    }
-  }
-}
-
-function collides(matrix, x, y) {
-  for (let r = 0; r < matrix.length; r++) {
-    for (let c = 0; c < matrix[r].length; c++) {
-      if (!matrix[r][c]) continue;
-      const newX = x + c;
-      const newY = y + r;
-      if (newX < 0 || newX >= COLS || newY >= ROWS) return true;
-      if (newY >= 0 && board[newY][newX]) return true;
-    }
+// Check collision of current piece at (x,y,rotation)
+function collisionAt(x, y, rotation) {
+  const shape = PIECES[current][rotation];
+  for (let [dx, dy] of shape) {
+    let px = x + dx, py = y + dy;
+    if (py < 0) continue;  // skip hidden rows
+    if (px < 0 || px >= COLS || py >= ROWS) return true;
+    if (board[py][px]) return true;
   }
   return false;
 }
 
-function move(dir) {
-  if (!current) return;
-  const newX = current.x + dir;
-  if (!collides(current.matrix, newX, current.y)) {
-    current.x = newX;
-    moveSound.play();
+// Lock the current piece into the board
+function lockPiece() {
+  const shape = PIECES[current][currentRotation];
+  for (let [dx, dy] of shape) {
+    let x = currentX + dx, y = currentY + dy;
+    if (y >= 0) {
+      board[y][x] = current;
+    }
   }
-}
-
-function rotate() {
-  if (!current) return;
-  const rotated = rotateMatrix(current.matrix);
-  if (!collides(rotated, current.x, current.y)) {
-    current.matrix = rotated;
-    moveSound.play();
-  }
-}
-
-function drop() {
-  if (!current) return;
-  if (!collides(current.matrix, current.x, current.y + 1)) {
-    current.y++;
-  } else {
-    lock();
-    clearLines();
-    spawn();
-  }
-}
-
-function hardDrop() {
-  if (!current) return;
-  while (!collides(current.matrix, current.x, current.y + 1)) {
-    current.y++;
-    score += 2;
-  }
-  lock();
-  dropSound.play();
+  playAudio(audioDrop);  // drop sound on lock
   clearLines();
-  spawn();
+  spawnPiece();
 }
 
-function rotateMatrix(matrix) {
-  return matrix[0].map((_, i) => matrix.map(row => row[i]).reverse());
-}
-
-function lock() {
-  const { x, y, matrix, shape } = current;
-  matrix.forEach((row, r) => {
-    row.forEach((val, c) => {
-      if (val && y + r >= 0) board[y + r][x + c] = COLORS[shape];
-    });
-  });
-  canHold = true;
-}
-
+// Clear full lines
 function clearLines() {
-  let lines = 0;
-  board = board.filter(row => {
-    if (row.every(cell => cell)) {
-      lines++;
-      return false;
+  for (let y = ROWS - 1; y >= 2; y--) {
+    if (board[y].every(cell => cell !== 0)) {
+      board.splice(y, 1);
+      board.unshift(Array(COLS).fill(0));
+      playAudio(audioClear);
+      y++; // re-check same row index
     }
-    return true;
-  });
-  while (board.length < ROWS) board.unshift(Array(COLS).fill(0));
-  if (lines) {
-    score += [0, 100, 300, 500, 800][lines];
-    scoreEl.textContent = score;
-    clearSound.play();
   }
 }
 
-function drawBlock(x, y, color) {
-  context.fillStyle = color;
-  context.fillRect(x, y, CELL, CELL);
-  context.strokeStyle = 'rgba(0,0,0,0.2)';
-  context.strokeRect(x, y, CELL, CELL);
-}
-
-function drawGhost() {
-  if (!current) return;
-  let ghostY = current.y;
-  while (!collides(current.matrix, current.x, ghostY + 1)) {
-    ghostY++;
-  }
-  context.fillStyle = 'rgba(255,255,255,0.1)';
-  current.matrix.forEach((row, r) => {
-    row.forEach((val, c) => {
-      if (val) {
-        context.fillRect((current.x + c) * CELL, (ghostY + r) * CELL, CELL, CELL);
-      }
-    });
-  });
-}
-
+// Draw all elements: board, ghost, current piece, and hold
 function draw() {
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      if (board[r][c]) drawBlock(c * CELL, r * CELL, board[r][c]);
-      context.strokeStyle = 'rgba(255,255,255,0.05)';
-      context.strokeRect(c * CELL, r * CELL, CELL, CELL);
+  // Clear board canvas
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // Draw locked blocks
+  for (let y = 2; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      if (board[y][x]) {
+        drawCell(ctx, x, y - 2, COLORS[board[y][x]]);
+      }
     }
   }
-  drawGhost();
+  // Draw ghost and current piece
   if (current) {
-    current.matrix.forEach((row, r) => {
-      row.forEach((val, c) => {
-        if (val) drawBlock((current.x + c) * CELL, (current.y + r) * CELL, COLORS[current.shape]);
-      });
-    });
+    drawGhost();
+    const shape = PIECES[current][currentRotation];
+    for (let [dx, dy] of shape) {
+      let x = currentX + dx, y = currentY + dy;
+      if (y >= 0) drawCell(ctx, x, y - 2, COLORS[current]);
+    }
+  }
+  // Draw hold box
+  drawHold();
+}
+
+// Draw a single block cell at (x,y) in grid space
+function drawCell(context, x, y, color) {
+  context.fillStyle = color;
+  context.fillRect(x * CELL, y * CELL, CELL - 1, CELL - 1);
+  context.strokeStyle = 'rgba(0,0,0,0.2)';
+  context.strokeRect(x * CELL, y * CELL, CELL - 1, CELL - 1);
+}
+
+// Compute and draw ghost piece (semi-transparent)
+function drawGhost() {
+  const shape = PIECES[current][currentRotation];
+  let gy = currentY;
+  while (!collisionAt(currentX, gy + 1, currentRotation)) {
+    gy++;
+  }
+  ctx.globalAlpha = 0.3;
+  for (let [dx, dy] of shape) {
+    let x = currentX + dx, y = gy + dy;
+    if (y >= 0) drawCell(ctx, x, y - 2, '#777');
+  }
+  ctx.globalAlpha = 1.0;
+}
+
+// Draw the held piece in its 4x4 hold canvas (centered)
+function drawHold() {
+  holdCtx.fillStyle = '#000';
+  holdCtx.fillRect(0, 0, holdCanvas.width, holdCanvas.height);
+  if (!holdPiece) return;
+  const shape = PIECES[holdPiece][0];
+  // Centering offsets
+  let xs = shape.map(c => c[0]), ys = shape.map(c => c[1]);
+  let minx = Math.min(...xs), maxx = Math.max(...xs);
+  let miny = Math.min(...ys), maxy = Math.max(...ys);
+  let offsetX = Math.floor((4 - (maxx - minx + 1)) / 2) - minx;
+  let offsetY = Math.floor((4 - (maxy - miny + 1)) / 2) - miny;
+  for (let [dx, dy] of shape) {
+    drawCell(holdCtx, dx + offsetX, dy + offsetY, COLORS[holdPiece]);
   }
 }
 
-function update(time = 0) {
-  if (!paused && !gameOver) {
-    const delta = time - lastDrop;
-    if (delta > dropInterval) {
-      drop();
-      lastDrop = time;
+// Spawn next piece from the shuffled 7-bag
+function spawnPiece() {
+  if (!bag.length) {
+    bag = ['I','J','L','O','S','T','Z'];
+    // Fisher–Yates shuffle
+    for (let i = bag.length - 1; i > 0; i--) {
+      let j = Math.floor(Math.random() * (i + 1));
+      [bag[i], bag[j]] = [bag[j], bag[i]];
     }
+  }
+  current = bag.pop();
+  currentRotation = 0;
+  currentX = (current === 'I' ? 3 : (current === 'O' ? 4 : 3));
+  currentY = (current === 'I' ? -1 : -2);
+  holdUsed = false;
+  // Guideline: drop one row if possible
+  if (!collisionAt(currentX, currentY + 1, currentRotation)) {
+    currentY++;
+  }
+  // Game Over check
+  if (collisionAt(currentX, currentY, currentRotation)) {
+    alert('Game Over');
+    board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+  }
+}
+
+// Move current piece left/right
+function move(offset) {
+  if (!collisionAt(currentX + offset, currentY, currentRotation)) {
+    currentX += offset;
+    playAudio(audioMove);
+  }
+}
+
+// Rotate current piece (1 = clockwise, -1 = CCW)
+function rotate(dir) {
+  let newRot = (currentRotation + (dir > 0 ? 1 : 3)) % 4;
+  if (!collisionAt(currentX, currentY, newRot)) {
+    currentRotation = newRot;
+  }
+}
+
+// Soft drop (one row)
+function drop() {
+  if (!collisionAt(currentX, currentY + 1, currentRotation)) {
+    currentY++;
+    playAudio(audioMove);
+  } else {
+    lockPiece();
+  }
+}
+
+// Hard drop (fall to bottom)
+function hardDrop() {
+  while (!collisionAt(currentX, currentY + 1, currentRotation)) {
+    currentY++;
+  }
+  lockPiece();
+  playAudio(audioDrop);
+}
+
+// Hold current piece
+function holdCurrent() {
+  if (holdUsed) return;
+  if (holdPiece === null) {
+    holdPiece = current;
+    spawnPiece();
+  } else {
+    [holdPiece, current] = [current, holdPiece];
+    currentRotation = 0;
+    currentX = (current === 'I' ? 3 : (current === 'O' ? 4 : 3));
+    currentY = (current === 'I' ? -1 : -2);
+    if (!collisionAt(currentX, currentY + 1, currentRotation)) {
+      currentY++;
+    }
+  }
+  holdUsed = true;
+  playAudio(audioMove);
+}
+
+// Play a sound effect from start
+function playAudio(audio) {
+  audio.currentTime = 0;
+  audio.play();
+}
+
+// Main game loop (automatic drop + redraw)
+let dropInterval = 500;
+let lastDrop = Date.now();
+function gameLoop() {
+  const now = Date.now();
+  if (now - lastDrop > dropInterval) {
+    drop();
+    lastDrop = now;
   }
   draw();
-  requestAnimationFrame(update);
+  requestAnimationFrame(gameLoop);
 }
 
-function togglePause() {
-  if (gameOver) return;
-  paused = !paused;
-  pausedText.classList.toggle('hidden', !paused);
-  paused ? bgm.pause() : bgm.play();
-}
-
-function startGame() {
-  resetBoard();
-  score = 0;
-  scoreEl.textContent = 0;
-  gameOver = false;
-  paused = false;
-  current = null;
-  hold = null;
-  drawHold();
-  gameOverText.classList.add('hidden');
-  pausedText.classList.add('hidden');
-  bgm.currentTime = 0;
-  bgm.play();
-  spawn();
-}
-
+// Keyboard controls
 document.addEventListener('keydown', e => {
-  if (gameOver) return;
   switch (e.code) {
-    case 'ArrowLeft': move(-1); break;
-    case 'ArrowRight': move(1); break;
-    case 'ArrowDown': drop(); break;
-    case 'ArrowUp': rotate(); break;
-    case 'Space': hardDrop(); break;
+    case 'ArrowLeft':  move(-1);            break;
+    case 'ArrowRight': move(1);             break;
+    case 'ArrowUp':    rotate(1);           break;
+    case 'KeyZ':       rotate(-1);          break;
+    case 'ArrowDown':  drop();              break;
+    case 'Space':      hardDrop();          break;
     case 'ShiftLeft':
-    case 'ShiftRight': holdPiece(); break;
-    case 'KeyP': togglePause(); break;
+    case 'KeyC':       holdCurrent();       break;
   }
 });
 
-startOverlay.onclick = () => {
-  startOverlay.classList.add('hidden');
-  startGame();
-};
-pauseBtn.onclick = togglePause;
-restartBtn.onclick = () => {
-  startOverlay.classList.remove('hidden');
-  startGame();
-};
+// On-screen button controls (mobile)
+document.getElementById('left').addEventListener('click',  () => move(-1));
+document.getElementById('right').addEventListener('click', () => move(1));
+document.getElementById('rotate').addEventListener('click',() => rotate(1));
+document.getElementById('down').addEventListener('click',  () => drop());
+document.getElementById('drop').addEventListener('click', () => hardDrop());
+document.getElementById('hold-btn').addEventListener('click', () => holdCurrent());
 
-['left', 'right', 'down', 'rotate'].forEach(id => {
-  document.getElementById(id + 'Btn').addEventListener('touchstart', e => {
-    e.preventDefault();
-    ({left: () => move(-1), right: () => move(1), down: drop, rotate} [id])();
-  });
-});
-
-resetBoard();
-requestAnimationFrame(update);
+// Start the game
+spawnPiece();
+gameLoop();
