@@ -9,20 +9,26 @@
 </head>
 <body>
   <div class="main-container">
+    <!-- Hold Display -->
+    <div class="hold-container">
+      <div class="label">Hold</div>
+      <canvas id="hold" width="120" height="120"></canvas>
+    </div>
+
+    <!-- Game Area -->
     <div class="game-container">
       <canvas id="game"></canvas>
       <div class="overlay">
+        <button id="startOverlay" class="game-start-button">Start Game</button>
         <div id="pausedText" class="game-text hidden">Paused</div>
         <div id="gameOverText" class="game-text hidden">Game Over</div>
       </div>
     </div>
 
+    <!-- Sidebar -->
     <div class="side-panel">
-      <div class="score-board">
-        Score: <span id="score">0</span>
-      </div>
+      <div class="score-board">Score: <span id="score">0</span></div>
       <div class="controls">
-        <button id="startBtn">Start</button>
         <button id="pauseBtn">Pause</button>
         <button id="restartBtn">Restart</button>
       </div>
@@ -30,21 +36,12 @@
   </div>
 
   <!-- Mobile Controls -->
-<div class="mobile-controls">
-  <div class="mobile-left">
+  <div class="mobile-controls">
     <button id="leftBtn">◀</button>
     <button id="rightBtn">▶</button>
-  </div>
-  <div class="mobile-right">
     <button id="rotateBtn">⟳</button>
     <button id="downBtn">▼</button>
   </div>
-  <div class="mobile-actions">
-    <button id="startBtnMobile">Start</button>
-    <button id="pauseBtnMobile">Pause</button>
-    <button id="restartBtnMobile">Restart</button>
-  </div>
-</div>
 
   <!-- Audio -->
   <audio id="bgm" loop><source src="audio/bgm.mp3" type="audio/mpeg"></audio>
