@@ -309,4 +309,18 @@ restartBtn.addEventListener('click', restartGame);
 
 // Initialize board and begin the loop
 initBoard();
+
 requestAnimationFrame(update);
+// Mobile touch control bindings
+document.getElementById('leftBtn').addEventListener('touchstart', e => {
+  e.preventDefault(); move(-1);
+});
+document.getElementById('rightBtn').addEventListener('touchstart', e => {
+  e.preventDefault(); move(1);
+});
+document.getElementById('rotateBtn').addEventListener('touchstart', e => {
+  e.preventDefault(); rotate();
+});
+document.getElementById('downBtn').addEventListener('touchstart', e => {
+  e.preventDefault(); drop();
+});
