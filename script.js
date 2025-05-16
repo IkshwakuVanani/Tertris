@@ -19,7 +19,6 @@ const moveSound = document.getElementById('moveSound');
 const dropSound = document.getElementById('dropSound');
 const clearSound = document.getElementById('clearSound');
 
-// Tetrominoes
 const SHAPES = {
   I: [[1,1,1,1]],
   J: [[1,0,0],[1,1,1]],
@@ -43,12 +42,10 @@ let gameOver = false;
 let lastDrop = 0;
 const dropInterval = 1000;
 
-// === Board Setup ===
 function resetBoard() {
   board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
 }
 
-// === Piece Handling ===
 function spawn() {
   const types = Object.keys(SHAPES);
   const shape = types[Math.floor(Math.random() * types.length)];
@@ -57,7 +54,7 @@ function spawn() {
     shape,
     matrix,
     x: Math.floor((COLS - matrix[0].length) / 2),
-    y: -1
+    y: -matrix.length
   };
   if (collides(current.matrix, current.x, current.y)) {
     gameOver = true;
@@ -76,7 +73,7 @@ function holdPiece() {
     [hold, current.shape] = [current.shape, hold];
     current.matrix = SHAPES[current.shape];
     current.x = Math.floor((COLS - current.matrix[0].length) / 2);
-    current.y = -1;
+    current.y = -current.matrix.length;
   }
   canHold = false;
   drawHold();
@@ -98,15 +95,12 @@ function drawHold() {
   }
 }
 
-// === Collision Detection ===
 function collides(matrix, x, y) {
   for (let r = 0; r < matrix.length; r++) {
     for (let c = 0; c < matrix[r].length; c++) {
       if (!matrix[r][c]) continue;
-
       const newX = x + c;
       const newY = y + r;
-
       if (newX < 0 || newX >= COLS || newY >= ROWS) return true;
       if (newY >= 0 && board[newY][newX]) return true;
     }
@@ -114,7 +108,6 @@ function collides(matrix, x, y) {
   return false;
 }
 
-// === Movement ===
 function move(dir) {
   if (!current) return;
   const newX = current.x + dir;
@@ -169,6 +162,7 @@ function lock() {
   });
   canHold = true;
 }
+
 function clearLines() {
   let lines = 0;
   board = board.filter(row => {
@@ -185,10 +179,32 @@ function clearLines() {
     clearSound.play();
   }
 }
+
+function drawBlock(x, y, color) {
+  context.fillStyle = color;
+  context.fillRect(x, y, CELL, CELL);
+  context.strokeStyle = 'rgba(0,0,0,0.2)';
+  context.strokeRect(x, y, CELL, CELL);
+}
+
+function drawGhost() {
+  if (!current) return;
+  let ghostY = current.y;
+  while (!collides(current.matrix, current.x, ghostY + 1)) {
+    ghostY++;
+  }
+  context.fillStyle = 'rgba(255,255,255,0.1)';
+  current.matrix.forEach((row, r) => {
+    row.forEach((val, c) => {
+      if (val) {
+        context.fillRect((current.x + c) * CELL, (ghostY + r) * CELL, CELL, CELL);
+      }
+    });
+  });
+}
+
 function draw() {
   context.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Draw background board
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       if (board[r][c]) drawBlock(c * CELL, r * CELL, board[r][c]);
@@ -196,11 +212,7 @@ function draw() {
       context.strokeRect(c * CELL, r * CELL, CELL, CELL);
     }
   }
-
-  // Draw ghost
   drawGhost();
-
-  // Draw current piece
   if (current) {
     current.matrix.forEach((row, r) => {
       row.forEach((val, c) => {
@@ -209,6 +221,7 @@ function draw() {
     });
   }
 }
+
 function update(time = 0) {
   if (!paused && !gameOver) {
     const delta = time - lastDrop;
@@ -220,6 +233,7 @@ function update(time = 0) {
   draw();
   requestAnimationFrame(update);
 }
+
 function togglePause() {
   if (gameOver) return;
   paused = !paused;
@@ -242,7 +256,7 @@ function startGame() {
   bgm.play();
   spawn();
 }
-// Controls
+
 document.addEventListener('keydown', e => {
   if (gameOver) return;
   switch (e.code) {
@@ -257,7 +271,6 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// Buttons
 startOverlay.onclick = () => {
   startOverlay.classList.add('hidden');
   startGame();
@@ -268,13 +281,12 @@ restartBtn.onclick = () => {
   startGame();
 };
 
-// Mobile controls
 ['left', 'right', 'down', 'rotate'].forEach(id => {
   document.getElementById(id + 'Btn').addEventListener('touchstart', e => {
     e.preventDefault();
     ({left: () => move(-1), right: () => move(1), down: drop, rotate} [id])();
   });
 });
-// Initialize board and run game loop
+
 resetBoard();
 requestAnimationFrame(update);
