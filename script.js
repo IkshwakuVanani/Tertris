@@ -102,8 +102,13 @@ function drawHold() {
 function collides(matrix, x, y) {
   for (let r = 0; r < matrix.length; r++) {
     for (let c = 0; c < matrix[r].length; c++) {
-      if (matrix[r][c] && (board[y + r] && board[y + r][x + c]) !== 0) return true;
-      if (matrix[r][c] && (x + c < 0 || x + c >= COLS || y + r >= ROWS)) return true;
+      if (!matrix[r][c]) continue;
+
+      const newX = x + c;
+      const newY = y + r;
+
+      if (newX < 0 || newX >= COLS || newY >= ROWS) return true;
+      if (newY >= 0 && board[newY][newX]) return true;
     }
   }
   return false;
