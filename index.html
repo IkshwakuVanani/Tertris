@@ -1,54 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tetris</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modern Tetris</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="main-container">
-    <!-- Hold Display -->
-    <div class="hold-container">
-      <div class="label">Hold</div>
-      <canvas id="hold" width="120" height="120"></canvas>
-    </div>
-
-    <!-- Game Area -->
-    <div class="game-container">
-      <canvas id="game"></canvas>
-      <div class="overlay">
-        <button id="startOverlay" class="game-start-button">Start Game</button>
-        <div id="pausedText" class="game-text hidden">Paused</div>
-        <div id="gameOverText" class="game-text hidden">Game Over</div>
-      </div>
-    </div>
-
-    <!-- Sidebar -->
-    <div class="side-panel">
-      <div class="score-board">Score: <span id="score">0</span></div>
-      <div class="controls">
-        <button id="pauseBtn">Pause</button>
-        <button id="restartBtn">Restart</button>
-      </div>
+  <div id="game-container">
+    <canvas id="board" width="300" height="600"></canvas>
+    <canvas id="hold" width="120" height="120"></canvas>
+    <div id="controls">
+      <button id="left">Left</button>
+      <button id="right">Right</button>
+      <button id="rotate">Rotate</button>
+      <button id="down">Down</button>
+      <button id="drop">Drop</button>
+      <button id="hold-btn">Hold</button>
     </div>
   </div>
-
-  <!-- Mobile Controls -->
-  <div class="mobile-controls">
-    <button id="leftBtn">◀</button>
-    <button id="rightBtn">▶</button>
-    <button id="rotateBtn">⟳</button>
-    <button id="downBtn">▼</button>
-  </div>
-
-  <!-- Audio -->
-  <audio id="bgm" loop><source src="audio/bgm.mp3" type="audio/mpeg"></audio>
-  <audio id="moveSound"><source src="audio/move.mp3" type="audio/mpeg"></audio>
-  <audio id="dropSound"><source src="audio/drop.mp3" type="audio/mpeg"></audio>
-  <audio id="clearSound"><source src="audio/clear.mp3" type="audio/mpeg"></audio>
-
   <script src="script.js"></script>
 </body>
 </html>
