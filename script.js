@@ -332,3 +332,12 @@ document.getElementById('rotateBtn').addEventListener('touchstart', e => {
 document.getElementById('downBtn').addEventListener('touchstart', e => {
   e.preventDefault(); drop();
 });
+document.getElementById('startBtnMobile').addEventListener('touchstart', e => {
+  e.preventDefault(); startGame();
+});
+document.getElementById('pauseBtnMobile').addEventListener('touchstart', e => {
+  e.preventDefault(); togglePause();
+});
+document.getElementById('restartBtnMobile').addEventListener('touchstart', e => {
+  e.preventDefault(); restartGame();
+});
