@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     squares.push(square);
   }
 
-  // Create bottom border
   for (let i = 0; i < 10; i++) {
     const square = document.createElement('div');
     square.classList.add('taken');
@@ -17,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
     squares.push(square);
   }
 
-  // Tetromino shapes
   const lTetromino = [
     [1, width + 1, width * 2 + 1, 2],
     [width, width + 1, width + 2, width * 2 + 2],
