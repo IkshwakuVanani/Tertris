@@ -104,7 +104,6 @@ canvas {
     margin-top: 20px;
   }
 }
-/* Mobile Controls */
 .mobile-controls {
   display: none;
 }
@@ -112,29 +111,34 @@ canvas {
 @media (max-width: 768px) {
   .mobile-controls {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     position: fixed;
     bottom: 10px;
-    padding: 0 20px;
     z-index: 10;
   }
 
+  .mobile-left, .mobile-right, .mobile-actions {
+    display: flex;
+    gap: 10px;
+  }
+
   .mobile-controls button {
-    font-size: 2rem;
-    padding: 15px 20px;
+    font-size: 1.4rem;
+    padding: 10px 12px;
     border: none;
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.25);
     backdrop-filter: blur(5px);
     color: white;
-    margin: 0 5px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
   }
 
-  .mobile-left, .mobile-right {
-    display: flex;
-    gap: 10px;
+  .side-panel, .controls {
+    display: none; /* hide desktop controls on mobile */
   }
 
   canvas {
